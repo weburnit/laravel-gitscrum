@@ -11,11 +11,12 @@ namespace GitScrum\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use GitScrum\Scopes\GlobalScope;
 
 class Issue extends Model
 {
     use SoftDeletes;
-
+    use GlobalScope;
     /**
      * The database table used by the model.
      *
@@ -150,4 +151,19 @@ class Issue extends Model
     {
         return isset($this->attributes['number']) ? $this->attributes['number'] : null;
     }
+
+    public function getStatusAvailableAttribute()
+	{
+		return ConfigStatus::type('issue')->get();
+	}
+
+    public function getSprintSlugAttribute()
+	{
+		return isset($this->sprint->slug) ? $this->sprint->slug : 0;
+	}
+
+    public function getSprintClosedAttribute()
+	{
+		return isset($this->sprint->closed_at) ? $this->sprint->closed_at : null;
+	}
 }

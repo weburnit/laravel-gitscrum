@@ -9,6 +9,7 @@
 namespace GitScrum\Http\Controllers;
 
 use GitScrum\Http\Requests\SprintRequest;
+use GitScrum\Models\ConfigStatus;
 use GitScrum\Models\ProductBacklog;
 use GitScrum\Models\Sprint;
 use Auth;
@@ -23,8 +24,7 @@ class SprintController extends Controller
      */
     public function index($mode = 'default', $slug_product_backlog = null)
     {
-        $sprints = Sprint::orderby('date_start', 'DESC')
-            ->orderby('date_finish', 'ASC');
+        $sprints = Sprint::order();
 
         if (!is_null($slug_product_backlog)) {
             $sprints = $sprints->join('product_backlogs', 'product_backlogs.id', 'sprints.product_backlog_id')
@@ -51,7 +51,7 @@ class SprintController extends Controller
         $productBacklog_id = null;
 
         if (!is_null($slug_product_backlog)) {
-            $productBacklog_id = ProductBacklog::where('slug', $slug_product_backlog)->first()->id;
+            $productBacklog_id = ProductBacklog::slug($slug_product_backlog)->first()->id;
         }
 
         return view('sprints.create')
@@ -84,7 +84,7 @@ class SprintController extends Controller
      */
     public function show($slug)
     {
-        $sprint = Sprint::where('slug', $slug)
+        $sprint = Sprint::slug($slug)
             ->with('issues.user')
             ->with('issues.users')
             ->with('issues.commits')
@@ -103,8 +103,11 @@ class SprintController extends Controller
             return redirect()->route('sprints.index');
         }
 
+        $configStatus = ConfigStatus::type('sprint')->get();
+
         return view('sprints.show')
-            ->with('sprint', $sprint);
+            ->with('sprint', $sprint)
+            ->with('configStatus', $configStatus);
     }
 
     /**
@@ -118,7 +121,7 @@ class SprintController extends Controller
      */
     public function edit($slug)
     {
-        $sprint = Sprint::where('slug', '=', $slug)->first();
+        $sprint = Sprint::slug($slug)->first();
 
         return view('sprints.edit')
             ->with('action', 'Edit')
@@ -137,7 +140,7 @@ class SprintController extends Controller
      */
     public function update(SprintRequest $request, $slug)
     {
-        $sprint = Sprint::where('slug', '=', $slug)->first();
+        $sprint = Sprint::slug($slug)->first();
         $sprint->update($request->all());
 
         return back()
@@ -155,7 +158,7 @@ class SprintController extends Controller
      */
     public function destroy(Request $request)
     {
-        $sprint = Sprint::where('slug', '=', $request->input('slug'))->first();
+        $sprint = Sprint::slug($request->input('slug'))->first();
 
         if (!count($sprint)) {
             return redirect()->route('sprints.index');
@@ -165,5 +168,15 @@ class SprintController extends Controller
 
         return redirect()->route('sprints.index')
             ->with('success', trans('Congratulations! The Sprint has been deleted successfully'));
+    }
+
+    public function statusUpdate($slug, $status)
+    {
+        $sprint = Sprint::slug($slug)
+            ->firstOrFail();
+        $sprint->config_status_id = $status;
+        $sprint->save();
+
+        return back()->with('success', trans('Updated successfully'));
     }
 }

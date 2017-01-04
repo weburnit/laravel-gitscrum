@@ -7,6 +7,7 @@ use GitScrum\Models\User;
 use GitScrum\Models\Issue;
 use GitScrum\Models\Organization;
 use GitScrum\Models\ProductBacklog;
+use GitScrum\Models\Branch;
 use Carbon\Carbon;
 use GitScrum\Contracts\ProviderInterface;
 
@@ -63,8 +64,10 @@ class Gitlab implements ProviderInterface
 
     public function tplIssue($obj, $productBacklogId)
     {
-        $user = User::where('username', @$obj->assignee->username)
-            ->where('provider', 'gitlab')->first();
+        if (isset($obj->assignee->username)) {
+            $user = User::where('username', @$obj->assignee->username)
+                ->where('provider', 'gitlab')->first();
+        }
 
         return [
             'provider_id' => $obj->id,
@@ -77,13 +80,13 @@ class Gitlab implements ProviderInterface
             'title' => $obj->title,
             'description' => $obj->description,
             'state' => $obj->state,
-            'html_url' => $obj->web_url,
+            'html_url' => isset($obj->web_url) ? $obj->web_url : '',
             'created_at' => Carbon::parse($obj->created_at)->toDateTimeString(),
             'updated_at' => Carbon::parse($obj->updated_at)->toDateTimeString(),
         ];
     }
 
-    public function readRepositories()
+    public function readRepositories($page = 1, &$repos = null)
     {
         $repos = collect(Helper::request(env('GITLAB_INSTANCE_URI').'api/v3/projects?access_token='.Auth::user()->token));
 
@@ -100,7 +103,6 @@ class Gitlab implements ProviderInterface
 
     public function organization($obj)
     {
-
         if (!isset($obj->owner) && !isset($obj->namespace)) {
             return false;
         }
@@ -115,7 +117,7 @@ class Gitlab implements ProviderInterface
 
             $group = $this->gitlabGroups[$obj->namespace->id];
 
-            $obj->owner = new \stdClass;
+            $obj->owner = new \stdClass();
             $obj->owner->id = $group['id'];
             $obj->owner->username = $group['path'];
             $obj->owner->web_url = $group['web_url'];
@@ -158,9 +160,10 @@ class Gitlab implements ProviderInterface
     }
 
     /**
-     * Get all members from a specific group in gitlab
+     * Get all members from a specific group in gitlab.
      *
      * @param $group
+     *
      * @return \Illuminate\Support\Collection
      */
     private function getGroupsMembers($group)
@@ -171,9 +174,10 @@ class Gitlab implements ProviderInterface
     }
 
     /**
-     * Get all members from the project in gitlab
+     * Get all members from the project in gitlab.
      *
      * @param $projectId
+     *
      * @return \Illuminate\Support\Collection
      */
     private function getProjectMembers($projectId)
@@ -185,9 +189,10 @@ class Gitlab implements ProviderInterface
 
     /**
      * A project can be shared with many groups and each group has its members
-     * This method retrieves all members from the groups that the project is shared with
+     * This method retrieves all members from the groups that the project is shared with.
      *
      * @param $projectId
+     *
      * @return \Illuminate\Support\Collection|static
      */
     private function getProjectSharedGroupsMembers($projectId)
@@ -211,7 +216,7 @@ class Gitlab implements ProviderInterface
      * Retrives all project members from three pespectives
      *  Members from the project itself
      *  Members of the groups that the project is owned by
-     *  Members by the groups that the project is shared with
+     *  Members by the groups that the project is shared with.
      *
      * @param $owner
      * @param $repo
@@ -261,11 +266,29 @@ class Gitlab implements ProviderInterface
         $organization = Organization::where('username', $owner)
             ->where('provider', 'gitlab')->first()->users();
 
-        $organization->sync($userId);
+        if (!$organization->userActive()->count()) {
+            $organization->attach($userId);
+        }
     }
 
-    public function createBranches($owner, $product_backlog_id, $repo)
+    public function createBranches($owner, $product_backlog_id, $repo, $providerId = null)
     {
+        $branches = collect(Helper::request(env('GITLAB_INSTANCE_URI').'api/v3/projects/'.$providerId.'/repository/branches?access_token='.Auth::user()->token));
+
+        $branchesData = [];
+        foreach ($branches as $branch) {
+            $branchesData[] = [
+                'product_backlog_id' => $product_backlog_id,
+                'title' => $branch->name,
+                'sha' => $branch->commit->id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ];
+        }
+
+        if ($branchesData) {
+            Branch::insert($branchesData);
+        }
     }
 
     public function readIssues()
@@ -279,13 +302,12 @@ class Gitlab implements ProviderInterface
             $issues = is_array($issues) ? $issues : [$issues];
 
             foreach ($issues as $issue) {
-                try{
+                try {
                     $data = $this->tplIssue($issue, $repo->id);
                     if (!Issue::where('provider_id', $data['provider_id'])->where('provider', 'gitlab')->first()) {
                         Issue::create($data)->users()->sync([$data['user_id']]);
                     }
-                } catch( \Exception $e){
-
+                } catch (\Exception $e) {
                 }
             }
         }

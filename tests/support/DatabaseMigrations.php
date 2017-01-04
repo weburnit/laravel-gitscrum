@@ -2,39 +2,19 @@
 
 trait DatabaseMigrations
 {
-
     protected static $dbInited = false;
 
     public function initDatabase()
     {
-        if (!self::$dbInited)
-        {
-            fwrite(STDOUT, "Preparing database" . "\n");
-            $path = storage_path().'/framework/cache/database.sqlite';
-            $this->deleteDatabase($path);
-            $this->createDatabase($path);
-            $this->runDatabaseMigrations();
+        if (!self::$dbInited) {
+            fwrite(STDOUT, 'Preparing database'."\n");
+            $this->artisan('migrate:refresh');
+            $this->artisan('db:seed');
             $user = $this->createUser();
             $this->createOrganization()->users()->sync([$user->id]);
             $this->createProductBacklog();
             self::$dbInited = true;
         }
-    }
-
-    private function deleteDatabase($path)
-    {
-        shell_exec('rm '.$path);
-    }
-
-    private function createDatabase($path)
-    {
-        shell_exec('touch '.$path);
-    }
-
-    private function runDatabaseMigrations()
-    {
-        $this->artisan('migrate');
-        $this->artisan('db:seed');
     }
 
     private function createOrganization()
@@ -45,7 +25,7 @@ trait DatabaseMigrations
             'provider_id' => $faker->randomNumber,
             'provider' => 'github',
             'username' => 'Laravel-GitScrum',
-            'email' => $faker->email
+            'email' => $faker->email,
         ];
 
         return \GitScrum\Models\Organization::create($data);
@@ -61,7 +41,7 @@ trait DatabaseMigrations
             'name' => $faker->name,
             'username' => $faker->username,
             'email' => $faker->email,
-            'avatar' => $faker->imageUrl(600, 600, 'people', true, 'Faker')
+            'avatar' => $faker->imageUrl(600, 600, 'people', true, 'Faker'),
         ];
 
         return \GitScrum\Models\User::create($data);
@@ -79,7 +59,7 @@ trait DatabaseMigrations
             'title' => 'laravel-gitscrum',
             'description' => 'Laravel GitScrum is a free application to help developer team. Git + Scrum = Team More Productive',
             'fullname' => 'renatomarinho/laravel-gitscrum',
-            'since' => \Carbon\Carbon::now()->toDateTimeString()
+            'since' => \Carbon\Carbon::now()->toDateTimeString(),
         ];
 
         return \GitScrum\Models\ProductBacklog::create($data);

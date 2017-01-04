@@ -10,15 +10,15 @@ interface ProviderInterface
 
     public function tplIssue($obj, $productBacklogId);
 
-    public function readRepositories();
+    public function readRepositories($page, &$repos);
 
     public function createOrUpdateRepository($owner, $obj, $oldTitle = null);
 
     public function organization($login);
 
-    public function readCollaborators($owner, $repo);
+    public function readCollaborators($owner, $repo, $providerId = null);
 
-    public function createBranches($owner, $product_backlog_id, $repo);
+    public function createBranches($owner, $product_backlog_id, $repo, $providerId = null);
 
     public function readIssues();
 

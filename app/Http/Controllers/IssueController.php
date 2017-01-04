@@ -22,15 +22,11 @@ use Auth;
 
 class IssueController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
     public function index($slug)
     {
         if ($slug) {
-            $sprint = Sprint::where('slug', $slug)
+            $sprint = Sprint::slug($slug)
                 ->with('issues.user')
                 ->with('issues.users')
                 ->with('issues.commits')
@@ -49,8 +45,7 @@ class IssueController extends Controller
 
         $issues = $issues->sortBy('position')->groupBy('config_status_id');
 
-        $configStatus = configStatus::where('type', 'issue')
-            ->orderby('position', 'ASC')->get();
+        $configStatus = ConfigStatus::type('issue')->get();
 
         if (!is_null($sprint) && !count($sprint)) {
             return redirect()->route('sprints.index');
@@ -62,11 +57,6 @@ class IssueController extends Controller
             ->with('configStatus', $configStatus);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create($slug_sprint = null, $slug_user_story = null, $parent_id = null)
     {
         $issue_types = IssueType::where('enabled', 1)
@@ -80,11 +70,11 @@ class IssueController extends Controller
         $userStory = $productBacklogs = null;
 
         if ((is_null($slug_sprint) || !$slug_sprint) && $slug_user_story) {
-            $userStory = UserStory::where('slug', $slug_user_story)->first();
+            $userStory = UserStory::slug($slug_user_story)->first();
             $productBacklogs = Auth::user()->productBacklogs($userStory->product_backlog_id);
             $usersByOrganization = Organization::find($userStory->productBacklog->organization_id)->users;
         } elseif ($slug_sprint) {
-            $usersByOrganization = Organization::find(Sprint::where('slug', $slug_sprint)->first()
+            $usersByOrganization = Organization::find(Sprint::slug($slug_sprint)->first()
                 ->productBacklog->organization_id)->users;
         } else {
             $issue = Issue::find($parent_id);
@@ -103,13 +93,6 @@ class IssueController extends Controller
             ->with('action', 'Create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function store(IssueRequest $request)
     {
         $issue = Issue::create($request->all());
@@ -122,16 +105,9 @@ class IssueController extends Controller
             ->with('success', trans('Congratulations! The Issue has been created with successfully'));
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function show($slug)
     {
-        $issue = Issue::where('slug', '=', $slug)
+        $issue = Issue::slug($slug)
             ->with('sprint')
             ->with('type')
             ->with('configEffort')
@@ -140,25 +116,14 @@ class IssueController extends Controller
 
         $usersByOrganization = Organization::find($issue->productBacklog->organization_id)->users;
 
-        $configStatus = configStatus::where('type', 'issue')
-            ->orderby('position', 'ASC')->get();
-
         return view('issues.show')
             ->with('issue', $issue)
-            ->with('usersByOrganization', $usersByOrganization)
-            ->with('configStatus', $configStatus);
+            ->with('usersByOrganization', $usersByOrganization);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function edit($slug)
     {
-        $issue = Issue::where('slug', '=', $slug)->first();
+        $issue = Issue::slug($slug)->first();
 
         $issue_types = IssueType::where('enabled', 1)
             ->orderby('position', 'ASC')
@@ -181,17 +146,9 @@ class IssueController extends Controller
             ->with('action', 'Edit');
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int                      $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function update(IssueRequest $request, $slug)
     {
-        $issue = Issue::where('slug', '=', $slug)->first();
+        $issue = Issue::slug($slug)->first();
         $issue->update($request->all());
 
         if (is_array($request->members)) {
@@ -210,12 +167,13 @@ class IssueController extends Controller
         $status = ConfigStatus::find($request->status_id);
         $save = function ($issue, $position = null) use ($request, $status) {
             $issue->config_status_id = $request->status_id;
-            $issue->closed_user_id = null;
-            $issue->closed_at = null;
 
-            if (!is_null($status->is_closed)) {
+            if (!is_null($status->is_closed) && is_null($issue->closed_at)) {
                 $issue->closed_user_id = Auth::id();
                 $issue->closed_at = Carbon::now();
+            } else if ( is_null($status->is_closed) ) {
+                $issue->closed_user_id = null;
+                $issue->closed_at = null;
             }
 
             if ($position) {
@@ -243,7 +201,7 @@ class IssueController extends Controller
                 ]);
             }
         } else {
-            $issue = Issue::where('slug', $slug)
+            $issue = Issue::slug($slug)
                 ->firstOrFail();
             $save($issue);
 
@@ -251,16 +209,9 @@ class IssueController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($slug)
+    public function destroy(Request $request)
     {
-        $issue = Issue::where('slug', $slug)->firstOrFail();
+        $issue = Issue::slug($request->slug)->firstOrFail();
 
         if (isset($issue->userStory)) {
             $redirect = redirect()->route('user_stories.show', ['slug' => $issue->userStory->slug]);

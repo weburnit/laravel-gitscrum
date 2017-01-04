@@ -10,11 +10,14 @@ namespace GitScrum\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use GitScrum\Scopes\GlobalScope;
 use Carbon\Carbon;
 
 class Status extends Model
 {
     use SoftDeletes;
+    use GlobalScope;
+
     /**
      * The database table used by the model.
      *
@@ -79,10 +82,9 @@ class Status extends Model
     {
         if (!isset($model->config_status_id)) {
             if (is_null($id)) {
-                $status = ConfigStatus::where('type', $alias)
-                    ->where('default', 1);
+                $status = ConfigStatus::type($alias)->default();
             } else {
-                $status = ConfigStatus::where('id', $id);
+                $status = ConfigStatus::find($id);
             }
 
             $model->config_status_id = $status->first()->id;

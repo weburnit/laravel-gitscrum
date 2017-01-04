@@ -56,6 +56,51 @@ header{
 	}
 }
 
+.card-detail {
+	background:#fff;
+	h4{
+		border-color:#CCD0D9;
+		small{
+			color:#444;
+		}
+    }
+}
+
+
+.ui-state-highlight-column{
+	background: #f0f0f0;
+	border-color: #c0c0c0;
+}
+
+
+.kanban-board{
+	.row.ui-sortable-helper .agile-list-scroll{
+		border-color:#fff;
+	}
+	.agile{
+		.agile-list-scroll{
+			background: #EEF0F1;
+		}
+		h5{
+			background: #fff;
+		}
+
+		.agile-list{
+			.label{
+	        	border-color:#fff;
+			}
+			a{
+				.label{
+					&:hover{
+						border-color:#000;
+						color:#000;
+					}
+				}
+			}
+		}
+	}
+}
+
 .breadcrumb-area{
 	background:#E6E9EE;
 	border-bottom: 1px solid #CCD0D9;
@@ -94,4 +139,35 @@ header{
 
 .list-group-item{
 	border-color:#E6E9EE;
+}
+
+
+.main-title{
+	background: -moz-linear-gradient(top, rgba(164,164,164, 0.4) 0%, rgba(0,0,0,0) 45%);
+	background: -webkit-linear-gradient(top, rgba(164,164,164, 0.4) 0%,rgba(0,0,0,0) 45%);
+	background: linear-gradient(to bottom, rgba(164,164,164, 0.4) 0%,rgba(0,0,0,0) 45%);
+	border-color: rgba(164,164,164, 0.7);
+	.label{
+		border-color:#fff;
+	}
+	a{
+		&:hover,
+		&:focus{
+			text-shadow: 2px 2px #333;
+		}
+	}
+	.dropdown-menu{
+		a{
+			&:hover,
+			&:focus{
+				text-shadow: none;
+			}
+		}
+	}
+	.btn-group{
+		.btn{
+			border-color:#fff;
+			color:#fff;
+		}
+	}
 }
