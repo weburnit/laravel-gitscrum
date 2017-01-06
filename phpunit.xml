@@ -12,6 +12,13 @@
         <testsuite name="Application Test Suite">
             <directory suffix="Test.php">./tests</directory>
         </testsuite>
+        <testsuite name="integration">
+            <file>./tests/integration/DashboardTest.php</file>
+        </testsuite>
+        <testsuite name="unit">
+            <file>./tests/unit/ProductBacklogTest.php</file>
+            <file>./tests/unit/SprintTest.php</file>
+        </testsuite>
     </testsuites>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
@@ -24,6 +31,6 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>
         <env name="DB_CONNECTION" value="testing"/>
-        <env name="DB_DATABASE" value="testing"/>    
+        <env name="DB_DATABASE" value="testing"/>
     </php>
 </phpunit>
