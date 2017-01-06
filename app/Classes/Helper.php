@@ -92,7 +92,7 @@ class Helper
             $postFields = json_encode($postFields);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-            curl_setopt($ch, CURLOPT_HTTPHEADER,  ['Content-Type: application/json',
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json',
                 'Content-Length: '.strlen($postFields), ]);
         }
 

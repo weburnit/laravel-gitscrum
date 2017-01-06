@@ -14,7 +14,6 @@ abstract class TestCase extends Illuminate\Foundation\Testing\TestCase
     protected $baseUrl = null;
 
     protected $visitUrl = '/';
-    protected $faker = null;
 
     /**
      * Creates the application.
@@ -36,11 +35,10 @@ abstract class TestCase extends Illuminate\Foundation\Testing\TestCase
         return $app;
     }
 
-    public function setUp(Factory $faker)
+    public function setUp()
     {
         parent::setUp();
         $this->initDatabase();
-        $this->faker = $faker;
 
         $user = \GitScrum\Models\User::find(1);
         $this->be($user);

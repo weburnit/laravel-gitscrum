@@ -17,7 +17,6 @@ use Auth;
 
 class UserStoryController extends Controller
 {
-
     public function index()
     {
     }

@@ -54,5 +54,4 @@ class DashboardTest extends TestCase
             ->press('Confirm and Create')
             ->seeInDatabase('sprints', ['title' => $title]);
     }
-
 }

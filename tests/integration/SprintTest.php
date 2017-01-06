@@ -2,5 +2,4 @@
 
 class SprintTest extends TestCase
 {
-
 }
