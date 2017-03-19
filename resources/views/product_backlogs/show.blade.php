@@ -8,7 +8,7 @@
 </div>
 <div class="col-lg-6 text-right">
     @include('partials.lnk-favorite', ['favorite' => $productBacklog->favorite, 'type' => 'product_backlogs',
-        'id' => $productBacklog->id, 'btnSize' => 'btn-sm font-bold', 'text' => trans('gitscrum.gitscrum.favorite')])
+        'id' => $productBacklog->id, 'btnSize' => 'btn-sm font-bold', 'text' => trans('gitscrum.favorite')])
 
     <a href="{{route('product_backlogs.edit', ['slug' => $productBacklog->slug])}}"
         class="btn btn-sm btn-primary"
@@ -83,7 +83,7 @@
             </div>
             <div id="tab-sprints" class="tab-pane">
                 <div class="panel-body">
-                    @include('partials.boxes.search-min', ['txtSearch' => trans('gitscrum.search-by-sprint-backlogs'))])
+                    @include('partials.boxes.search-min', ['txtSearch' => trans('gitscrum.search-by-sprint-backlogs')])
                     @include('partials.boxes.sprint', [ 'list' => $sprints ])
                 </div>
             </div>
